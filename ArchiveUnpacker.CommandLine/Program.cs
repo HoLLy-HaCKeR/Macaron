@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using ArchiveUnpacker.CommandLine.CommandLineParsing;
+using ArchiveUnpacker.CommandLine.Dokan;
 using ArchiveUnpacker.Core;
 using ArchiveUnpacker.Unpackers;
 using CommandLine;
@@ -20,10 +21,11 @@ namespace ArchiveUnpacker.CommandLine
             if (args.Length == 1 && Directory.Exists(args[0]))
                 Extract(new ExtractOptions { Directory = args[0] });
             else
-                Parser.Default.ParseArguments<ExtractOptions, ListOptions, DetectOptions>(args)
+                Parser.Default.ParseArguments<ExtractOptions, ListOptions, DetectOptions, DokanOptions>(args)
                     .WithParsed<ExtractOptions>(Extract)
                     .WithParsed<ListOptions>(List)
-                    .WithParsed<DetectOptions>(Detect);
+                    .WithParsed<DetectOptions>(Detect)
+                    .WithParsed<DokanOptions>(RunDokan);
         }
 
         private static void Extract(ExtractOptions opt)
@@ -82,6 +84,24 @@ namespace ArchiveUnpacker.CommandLine
             }
 
             Console.WriteLine(unpacker.GetType().Name);
+        }
+
+        private static void RunDokan(DokanOptions opt)
+        {
+            // Get unpacker
+            var unpacker = UnpackerRegistry.Get(opt.Directory);
+
+            if (unpacker is null) {
+                Console.WriteLine("Couldn't find an unpacker for this game/engine.");
+                return;
+            }
+
+            var dfs = new DokanFS(unpacker.LoadFiles(opt.Directory).ToArray());
+            DokanNet.Dokan.Mount(dfs, @"M:\", DokanNet.DokanOptions.WriteProtection);
+            // for now, unmount using `dokanctl.exe /u DriveLetter`
+            // later we'll use Dokan.Unmount()
+
+            Console.WriteLine("Unmounted");
         }
     }
 }

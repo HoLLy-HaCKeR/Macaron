@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <PackageReference Include="CommandLineParser" Version="2.4.3" />
+        <PackageReference Include="DokanNet" Version="1.1.2.1" />
     </ItemGroup>
 
     <ItemGroup>
